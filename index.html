@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlockVote — Secure E-Voting System</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050a14;
+    --surface: #0b1426;
+    --surface2: #0f1e35;
+    --border: #1a3050;
+    --accent: #00e5ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --glow: 0 0 20px rgba(0,229,255,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Grid bg ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Navbar ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    background: rgba(5,10,20,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+  }
+
+  .nav-links { display: flex; gap: 8px; }
+
+  .nav-btn {
+    padding: 8px 18px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+  }
+
+  .nav-btn:hover, .nav-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,229,255,0.05);
+  }
+
+  /* ── Main ── */
+  main { position: relative; z-index: 1; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: calc(100vh - 65px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 24px;
+    gap: 28px;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.25);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  .hero-badge span { width: 6px; height: 6px; background: var(--accent3); border-radius: 50%; animation: pulse 1.5s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.4); }
+  }
+
+  .hero h1 {
+    font-size: clamp(2.4rem, 6vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -2px;
+    max-width: 800px;
+  }
+
+  .hero h1 .highlight {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    max-width: 560px;
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+
+  .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+  .btn-primary {
+    padding: 14px 32px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    box-shadow: 0 0 24px rgba(0,229,255,0.35);
+  }
+
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 36px rgba(0,229,255,0.55); }
+
+  .btn-secondary {
+    padding: 14px 32px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+  }
+
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.04); }
+
+  /* ── Stats row ── */
+  .stats-row {
+    display: flex;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .stat {
+    flex: 1;
+    background: var(--surface);
+    padding: 20px 32px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+  /* ── Flow cards ── */
+  .flow-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  .flow-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+
+  .flow-card:hover { border-color: var(--accent); }
+
+  .flow-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: linear-gradient(180deg, var(--accent), var(--accent2));
+  }
+
+  .flow-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .flow-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+  .flow-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+
+  /* ── Page layout ── */
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  .page-header {
+    margin-bottom: 36px;
+  }
+
+  .page-header h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+
+  .page-header p { color: var(--muted); margin-top: 8px; font-size: 0.95rem; }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-title .icon {
+    width: 32px; height: 32px;
+    background: rgba(0,229,255,0.1);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+  }
+
+  /* ── Form ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  input, select {
+    padding: 12px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,255,0.1); }
+
+  select option { background: var(--surface); }
+
+  .btn-full {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #00b4cc);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all .2s;
+    box-shadow: 0 4px 20px rgba(0,229,255,0.25);
+  }
+
+  .btn-full:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(0,229,255,0.4); }
+  .btn-full:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ── OTP box ── */
+  .otp-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0;
+  }
+
+  .otp-input {
+    width: 52px; height: 56px;
+    text-align: center;
+    font-size: 1.3rem;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    border-radius: 10px;
+  }
+
+  /* ── Alert ── */
+  .alert {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    margin-top: 14px;
+    display: none;
+  }
+
+  .alert.success { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: var(--accent3); display: block; }
+  .alert.error { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: var(--danger); display: block; }
+  .alert.info { background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); color: var(--accent); display: block; }
+
+  /* ── Candidates ── */
+  .candidates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .candidate-card {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 18px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .candidate-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+
+  .candidate-card.selected {
+    border-color: var(--accent3);
+    background: rgba(16,185,129,0.07);
+    box-shadow: 0 0 0 4px rgba(16,185,129,0.15);
+  }
+
+  .candidate-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 10px; right: 12px;
+    width: 22px; height: 22px;
+    background: var(--accent3);
+    color: #000;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 22px;
+  }
+
+  .candidate-avatar {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--surface), var(--surface2));
+    border: 2px solid var(--border);
+  }
+
+  .candidate-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+  .candidate-party { font-size: 0.78rem; color: var(--muted); }
+
+  .party-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+  }
+
+  /* ── Blockchain ── */
+  .blockchain-vis {
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .chain {
+    display: flex;
+    gap: 0;
+    align-items: center;
+    min-width: max-content;
+    padding: 10px 0;
+  }
+
+  .block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    min-width: 160px;
+    animation: blockIn .4s ease-out;
+    position: relative;
+  }
+
+  @keyframes blockIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.95); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .block.genesis { border-color: var(--accent2); }
+  .block.new-block { border-color: var(--accent3); box-shadow: 0 0 16px rgba(16,185,129,0.25); }
+
+  .block-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; font-family: 'Space Mono', monospace; }
+  .block-hash { font-size: 0.72rem; color: var(--accent); font-family: 'Space Mono', monospace; word-break: break-all; }
+  .block-data { font-size: 0.78rem; margin-top: 8px; }
+  .block-num { font-size: 0.7rem; color: var(--muted); margin-top: 6px; font-family: 'Space Mono', monospace; }
+
+  .chain-arrow {
+    padding: 0 6px;
+    color: var(--muted);
+    font-size: 1.2rem;
+  }
+
+  /* ── Results ── */
+  .result-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .result-name { font-weight: 700; min-width: 140px; font-size: 0.9rem; }
+  .result-bar-wrap { flex: 1; height: 10px; background: var(--surface2); border-radius: 999px; overflow: hidden; }
+  .result-bar { height: 100%; border-radius: 999px; transition: width 1s ease; }
+  .result-count { font-family: 'Space Mono', monospace; font-size: 0.8rem; color: var(--muted); min-width: 60px; text-align: right; }
+  .result-pct { font-family: 'Space Mono', monospace; font-size: 0.78rem; color: var(--accent); min-width: 44px; text-align: right; }
+
+  .winner-banner {
+    background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(0,229,255,0.08));
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .winner-crown { font-size: 2rem; }
+  .winner-label { font-size: 0.75rem; color: var(--accent3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .winner-name { font-size: 1.2rem; font-weight: 800; }
+
+  /* ── Step progress ── */
+  .step-progress {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 28px;
+  }
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .step.done { color: var(--accent3); }
+  .step.active { color: var(--accent); }
+
+  .step-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .step.done .step-dot { background: var(--accent3); border-color: var(--accent3); color: #000; }
+  .step.active .step-dot { border-color: var(--accent); color: var(--accent); }
+
+  .step-line { flex: 1; height: 2px; background: var(--border); margin: 0 4px; min-width: 20px; }
+  .step-line.done { background: var(--accent3); }
+
+  /* ── Tag ── */
+  .tag {
+    display: inline-flex;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .tag-green { background: rgba(16,185,129,0.15); color: var(--accent3); }
+  .tag-blue { background: rgba(0,229,255,0.1); color: var(--accent); }
+  .tag-purple { background: rgba(124,58,237,0.15); color: #a78bfa; }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Wallet ── */
+  .wallet-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--accent);
+    word-break: break-all;
+    line-height: 1.6;
+  }
+
+  .wallet-label { font-family: 'Syne', sans-serif; font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── Transaction hash ── */
+  .tx-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--surface2);
+    border-radius: 10px;
+    margin-top: 10px;
+    border: 1px solid var(--border);
+  }
+  .tx-icon { font-size: 1rem; }
+  .tx-hash { font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--accent); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tx-tag { }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; }
+  .tab {
+    padding: 8px 18px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .tab.active { background: rgba(0,229,255,0.08); border-color: var(--accent); color: var(--accent); }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    nav { padding: 14px 16px; }
+    .nav-links { display: none; }
+    .form-grid { grid-template-columns: 1fr; }
+    .stats-row { flex-direction: column; gap: 1px; }
+    .form-group.full { grid-column: 1; }
+    .page { padding: 24px 16px 60px; }
+    .hero { padding: 40px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="logo-icon">🗳️</div>
+    BlockVote
+  </div>
+  <div class="nav-links">
+    <button class="nav-btn active" onclick="showSection('home')">Home</button>
+    <button class="nav-btn" onclick="showSection('register')">Register</button>
+    <button class="nav-btn" onclick="showSection('auth')">Login</button>
+    <button class="nav-btn" onclick="showSection('vote')">Vote</button>
+    <button class="nav-btn" onclick="showSection('blockchain')">Blockchain</button>
+    <button class="nav-btn" onclick="showSection('results')">Results</button>
+  </div>
+  <div id="voter-status" style="font-size:0.78rem; color:var(--muted); font-family:'Space Mono',monospace;"></div>
+</nav>
+
+<main>
+
+<!-- ══════════ HOME ══════════ -->
+<section id="home" class="section active">
+  <div class="hero">
+    <div class="hero-badge"><span></span> BLOCKCHAIN-POWERED VOTING SYSTEM</div>
+    <h1>Vote with <span class="highlight">Confidence</span><br>on the Blockchain</h1>
+    <p>India's most secure, transparent, and tamper-proof electronic voting system. Powered by blockchain technology for immutable, decentralized democracy.</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="showSection('register')">Register to Vote →</button>
+      <button class="btn-secondary" onclick="showSection('results')">View Live Results</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-num" id="stat-votes">0</div>
+        <div class="stat-label">Votes Cast</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="stat-blocks">1</div>
+        <div class="stat-label">Blocks Mined</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">100%</div>
+        <div class="stat-label">Tamper-Proof</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">6</div>
+        <div class="stat-label">Candidates</div>
+      </div>
+    </div>
+
+    <div class="flow-cards">
+      <div class="flow-card">
+        <div class="flow-num">STEP 01</div>
+        <div class="flow-title">🪪 Register</div>
+        <div class="flow-desc">Verify identity with Aadhaar/ID. Get a unique cryptographic wallet address.</div>
+      </div>
+      <div class="flow-card">
+        <div class="flow-num">STEP 02</div>
+        <div class="flow-title">🔐 Authenticate</div>
+        <div class="flow-desc">Secure login via OTP + biometric simulation. Multi-factor auth.</div>
+      </div>
+      <div class="flow-card">
+        <div class="flow-num">STEP 03</div>
+        <div class="flow-title">🗳️ Cast Vote</div>
+        <div class="flow-desc">Select your candidate. Vote is encrypted into a blockchain transaction.</div>
+      </div>
+      <div class="flow-card">
+        <div class="flow-num">STEP 04</div>
+        <div class="flow-title">⛓️ Confirmed</div>
+        <div class="flow-desc">Transaction added to blockchain. Consensus verified by all nodes.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ REGISTER ══════════ -->
+<section id="register" class="section">
+  <div class="page">
+    <div class="page-header">
+      <h2>🪪 Voter Registration</h2>
+      <p>Register with your identity credentials to receive your voting wallet.</p>
+    </div>
+
+    <div class="step-progress">
+      <div class="step active" id="sp-reg"><div class="step-dot">1</div> Register</div>
+      <div class="step-line"></div>
+      <div class="step" id="sp-auth"><div class="step-dot">2</div> Authenticate</div>
+      <div class="step-line"></div>
+      <div class="step" id="sp-vote"><div class="step-dot">3</div> Vote</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="icon">📋</div> Personal Details</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="reg-name" placeholder="Rahul Kumar Singh">
+        </div>
+        <div class="form-group">
+          <label>Date of Birth</label>
+          <input type="date" id="reg-dob">
+        </div>
+        <div class="form-group">
+          <label>Aadhaar Number</label>
+          <input type="text" id="reg-aadhaar" placeholder="XXXX XXXX XXXX" maxlength="14">
+        </div>
+        <div class="form-group">
+          <label>Voter ID</label>
+          <input type="text" id="reg-voterid" placeholder="ABC1234567">
+        </div>
+        <div class="form-group">
+          <label>Mobile Number</label>
+          <input type="tel" id="reg-mobile" placeholder="+91 98765 43210">
+        </div>
+        <div class="form-group">
+          <label>State</label>
+          <select id="reg-state">
+            <option value="">Select State</option>
+            <option>Uttar Pradesh</option><option>Delhi</option><option>Maharashtra</option>
+            <option>Bihar</option><option>West Bengal</option><option>Tamil Nadu</option>
+            <option>Rajasthan</option><option>Madhya Pradesh</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Constituency</label>
+          <input type="text" id="reg-constituency" placeholder="Enter constituency">
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="reg-email" placeholder="voter@email.com">
+        </div>
+      </div>
+      <button class="btn-full" onclick="registerVoter()">🔐 Generate Wallet & Register</button>
+      <div id="reg-alert"></div>
+    </div>
+
+    <div class="card" id="wallet-card" style="display:none;">
+      <div class="card-title"><div class="icon">💳</div> Your Voting Wallet</div>
+      <div class="wallet-label">Wallet Address</div>
+      <div class="wallet-box" id="wallet-address"></div>
+      <div style="margin-top:14px;">
+        <div class="wallet-label">Public Key (Voter ID Token)</div>
+        <div class="wallet-box" id="wallet-pubkey"></div>
+      </div>
+      <div class="alert info" style="display:block; margin-top:14px;">
+        ⚠️ Save your wallet address. You'll need it to verify your vote on the blockchain.
+      </div>
+      <button class="btn-full" onclick="showSection('auth')" style="margin-top:14px; background: linear-gradient(135deg,var(--accent3),#059669);">
+        Proceed to Authentication →
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ AUTH ══════════ -->
+<section id="auth" class="section">
+  <div class="page">
+    <div class="page-header">
+      <h2>🔐 Voter Authentication</h2>
+      <p>Multi-factor authentication to verify your identity before voting.</p>
+    </div>
+
+    <div class="card" id="auth-step1">
+      <div class="card-title"><div class="icon">📱</div> Step 1 — OTP Verification</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Registered Mobile / Aadhaar</label>
+          <input type="text" id="auth-mobile" placeholder="Enter Aadhaar or Mobile">
+        </div>
+      </div>
+      <button class="btn-full" onclick="sendOTP()">Send OTP →</button>
+      <div id="auth-alert1"></div>
+    </div>
+
+    <div class="card" id="auth-step2" style="display:none;">
+      <div class="card-title"><div class="icon">🔢</div> Enter OTP</div>
+      <p style="font-size:0.85rem; color:var(--muted); margin-bottom:4px;">OTP sent to your registered mobile.</p>
+      <div style="font-family:'Space Mono',monospace; font-size:0.8rem; color:var(--accent3); margin-bottom: 16px;" id="otp-hint"></div>
+      <div class="otp-row">
+        <input type="text" class="otp-input" maxlength="1" id="o1" oninput="otpNext(this,'o2')">
+        <input type="text" class="otp-input" maxlength="1" id="o2" oninput="otpNext(this,'o3')">
+        <input type="text" class="otp-input" maxlength="1" id="o3" oninput="otpNext(this,'o4')">
+        <input type="text" class="otp-input" maxlength="1" id="o4" oninput="otpNext(this,'o5')">
+        <input type="text" class="otp-input" maxlength="1" id="o5" oninput="otpNext(this,'o6')">
+        <input type="text" class="otp-input" maxlength="1" id="o6">
+      </div>
+      <button class="btn-full" onclick="verifyOTP()">Verify OTP</button>
+      <div id="auth-alert2"></div>
+    </div>
+
+    <div class="card" id="auth-step3" style="display:none;">
+      <div class="card-title"><div class="icon">👁️</div> Step 2 — Biometric Simulation</div>
+      <p style="font-size:0.88rem; color:var(--muted); margin-bottom:20px;">Simulate fingerprint / iris scan authentication.</p>
+      <div id="bio-scan" style="text-align:center; padding: 30px 0;">
+        <div id="scan-circle" style="width:100px;height:100px;border-radius:50%;border:3px solid var(--border);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;cursor:pointer;transition:all .3s;" onclick="startBiometric()">
+          👆
+        </div>
+        <div style="font-size:0.85rem; color:var(--muted);" id="bio-status">Click to scan fingerprint</div>
+      </div>
+      <div id="auth-alert3"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ VOTE ══════════ -->
+<section id="vote" class="section">
+  <div class="page">
+    <div class="page-header">
+      <h2>🗳️ Cast Your Vote</h2>
+      <p>Select your preferred candidate. Your vote will be encrypted and stored on the blockchain.</p>
+    </div>
+
+    <div id="vote-locked" class="alert error" style="display:none;">
+      🔒 You must authenticate first before casting a vote.
+    </div>
+    <div id="vote-done" class="alert success" style="display:none;">
+      ✅ You have already cast your vote in this election.
+    </div>
+
+    <div id="vote-panel">
+      <div class="card">
+        <div class="card-title"><div class="icon">🏛️</div> General Election 2025 — Candidates</div>
+        <div class="candidates-grid" id="candidates-grid">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <div class="card" id="vote-confirm" style="display:none;">
+        <div class="card-title"><div class="icon">✅</div> Confirm Your Vote</div>
+        <p style="font-size:0.88rem; color:var(--muted); margin-bottom:16px;">You are voting for:</p>
+        <div id="selected-display" style="font-size:1.1rem; font-weight:800; margin-bottom:16px; padding:14px; background:var(--surface2); border-radius:10px; border:1px solid var(--border);"></div>
+        <p style="font-size:0.8rem; color:var(--muted);">⚠️ This action is irreversible. Once submitted, your vote cannot be changed.</p>
+        <div style="display:flex; gap:10px; margin-top:14px;">
+          <button class="btn-secondary" onclick="clearSelection()" style="flex:1; padding:12px;">← Change</button>
+          <button class="btn-full" onclick="castVote()" style="flex:2; margin-top:0;" id="cast-btn">⛓️ Submit to Blockchain</button>
+        </div>
+      </div>
+
+      <div class="card" id="vote-receipt" style="display:none;">
+        <div class="card-title"><div class="icon">🎉</div> Vote Successfully Cast!</div>
+        <div class="alert success">Your vote has been encrypted and added to the blockchain.</div>
+        <div style="margin-top:14px;">
+          <div class="wallet-label">Transaction Hash</div>
+          <div class="wallet-box" id="tx-hash"></div>
+        </div>
+        <div style="margin-top:14px;">
+          <div class="wallet-label">Block Number</div>
+          <div class="wallet-box" id="block-num"></div>
+        </div>
+        <div style="margin-top:14px;">
+          <div class="wallet-label">Timestamp</div>
+          <div class="wallet-box" id="vote-timestamp"></div>
+        </div>
+        <button class="btn-full" onclick="showSection('blockchain')" style="margin-top:16px;">View on Blockchain →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ BLOCKCHAIN ══════════ -->
+<section id="blockchain" class="section">
+  <div class="page">
+    <div class="page-header">
+      <h2>⛓️ Blockchain Explorer</h2>
+      <p>Real-time view of all vote transactions stored on the immutable blockchain.</p>
+    </div>
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:24px;">
+      <div class="card" style="flex:1; min-width:140px; margin-bottom:0; text-align:center;">
+        <div style="font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px;">Total Blocks</div>
+        <div style="font-size:1.8rem; font-weight:800; color:var(--accent); font-family:'Space Mono',monospace;" id="bc-blocks">1</div>
+      </div>
+      <div class="card" style="flex:1; min-width:140px; margin-bottom:0; text-align:center;">
+        <div style="font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px;">Transactions</div>
+        <div style="font-size:1.8rem; font-weight:800; color:var(--accent3); font-family:'Space Mono',monospace;" id="bc-txs">0</div>
+      </div>
+      <div class="card" style="flex:1; min-width:140px; margin-bottom:0; text-align:center;">
+        <div style="font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px;">Consensus</div>
+        <div style="font-size:1.8rem; font-weight:800; color:#a78bfa; font-family:'Space Mono',monospace;">PoA</div>
+      </div>
+      <div class="card" style="flex:1; min-width:140px; margin-bottom:0; text-align:center;">
+        <div style="font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px;">Network</div>
+        <div style="font-size:1.8rem; font-weight:800; color:var(--accent3); font-family:'Space Mono',monospace;">LIVE</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="icon">🔗</div> Chain Visualization</div>
+      <div class="blockchain-vis">
+        <div class="chain" id="chain-vis"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="icon">📜</div> Transaction Log</div>
+      <div id="tx-log">
+        <div style="text-align:center; padding:30px; color:var(--muted); font-size:0.88rem;">No transactions yet. Cast a vote to see it here.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ RESULTS ══════════ -->
+<section id="results" class="section">
+  <div class="page">
+    <div class="page-header">
+      <h2>📊 Live Election Results</h2>
+      <p>Transparent, real-time vote counts directly from the blockchain.</p>
+    </div>
+
+    <div id="winner-box" style="display:none;" class="winner-banner">
+      <div class="winner-crown">👑</div>
+      <div>
+        <div class="winner-label">Current Leader</div>
+        <div class="winner-name" id="winner-name">—</div>
+      </div>
+      <div style="margin-left:auto; text-align:right;">
+        <div class="winner-label">Votes</div>
+        <div class="winner-name" id="winner-count" style="font-family:'Space Mono',monospace;">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="icon">📊</div> Vote Distribution</div>
+      <div id="results-bars"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="icon">🔍</div> Verify Your Vote</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Transaction Hash</label>
+          <input type="text" id="verify-hash" placeholder="0x... enter your tx hash">
+        </div>
+      </div>
+      <button class="btn-full" onclick="verifyVote()">🔍 Verify on Blockchain</button>
+      <div id="verify-result"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+const state = {
+  registered: false,
+  authenticated: false,
+  voted: false,
+  voter: null,
+  wallet: null,
+  otpGenerated: null,
+  selectedCandidate: null,
+  blocks: [],
+  transactions: [],
+};
+
+const CANDIDATES = [
+  { id: 1, name: 'Arjun Sharma', party: 'BJP', color: '#f97316', symbol: '🪷', votes: 0 },
+  { id: 2, name: 'Priya Singh', party: 'INC', color: '#3b82f6', symbol: '✋', votes: 0 },
+  { id: 3, name: 'Ravi Kumar', party: 'AAP', color: '#10b981', symbol: '🧹', votes: 0 },
+  { id: 4, name: 'Meera Devi', party: 'SP', color: '#ef4444', symbol: '🚲', votes: 0 },
+  { id: 5, name: 'Suresh Yadav', party: 'BSP', color: '#8b5cf6', symbol: '🐘', votes: 0 },
+  { id: 6, name: 'Anjali Patel', party: 'IND', color: '#64748b', symbol: '⭐', votes: 0 },
+];
+
+// Genesis block
+state.blocks.push({
+  index: 0,
+  hash: '0x0000000000000000genesis',
+  prevHash: '0x0000000000000000000000',
+  data: 'Genesis Block — Election 2025',
+  timestamp: new Date().toISOString(),
+  nonce: 0,
+});
+
+// ══════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const idx = ['home','register','auth','vote','blockchain','results'].indexOf(id);
+  document.querySelectorAll('.nav-btn')[idx]?.classList.add('active');
+
+  if (id === 'blockchain') renderBlockchain();
+  if (id === 'results') renderResults();
+  if (id === 'vote') renderVotePanel();
+}
+
+// ══════════════════════════════════════
+// REGISTER
+// ══════════════════════════════════════
+function registerVoter() {
+  const name = document.getElementById('reg-name').value.trim();
+  const aadhaar = document.getElementById('reg-aadhaar').value.trim();
+  const mobile = document.getElementById('reg-mobile').value.trim();
+  const state_ = document.getElementById('reg-state').value;
+
+  if (!name || !aadhaar || !mobile || !state_) {
+    showAlert('reg-alert', 'error', '❌ Please fill all required fields.');
+    return;
+  }
+
+  // Generate wallet
+  const wallet = generateWallet(name + aadhaar);
+  state.wallet = wallet;
+  state.voter = { name, aadhaar, mobile };
+  state.registered = true;
+
+  document.getElementById('wallet-address').textContent = wallet.address;
+  document.getElementById('wallet-pubkey').textContent = wallet.pubkey;
+  document.getElementById('wallet-card').style.display = 'block';
+  showAlert('reg-alert', 'success', `✅ Registered successfully! Wallet generated for ${name}.`);
+  updateVoterStatus();
+}
+
+function generateWallet(seed) {
+  const hash = (s) => {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) {
+      h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+    }
+    return Math.abs(h).toString(16).padStart(8, '0');
+  };
+  const rand = () => Math.random().toString(16).slice(2).padStart(8,'0');
+  const address = '0x' + hash(seed) + rand() + rand() + rand() + rand();
+  const pubkey = '0x04' + rand()+rand()+rand()+rand()+rand()+rand()+rand()+rand();
+  return { address, pubkey };
+}
+
+// ══════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════
+function sendOTP() {
+  const input = document.getElementById('auth-mobile').value.trim();
+  if (!input) { showAlert('auth-alert1', 'error', '❌ Enter your Aadhaar or mobile number.'); return; }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  state.otpGenerated = otp;
+
+  document.getElementById('otp-hint').textContent = `[Demo] Your OTP: ${otp}`;
+  document.getElementById('auth-step2').style.display = 'block';
+  showAlert('auth-alert1', 'success', `📱 OTP sent to ${input.replace(/./g, (c,i) => i > 3 && i < input.length - 2 ? '*' : c)}`);
+}
+
+function otpNext(el, nextId) {
+  if (el.value.length === 1) document.getElementById(nextId)?.focus();
+}
+
+function verifyOTP() {
+  const entered = ['o1','o2','o3','o4','o5','o6'].map(id => document.getElementById(id).value).join('');
+  if (entered === state.otpGenerated) {
+    showAlert('auth-alert2', 'success', '✅ OTP verified! Proceed to biometric.');
+    document.getElementById('auth-step3').style.display = 'block';
+  } else {
+    showAlert('auth-alert2', 'error', '❌ Invalid OTP. Please try again.');
+  }
+}
+
+function startBiometric() {
+  const circle = document.getElementById('scan-circle');
+  const status = document.getElementById('bio-status');
+  circle.style.border = '3px solid var(--accent)';
+  circle.style.boxShadow = '0 0 20px rgba(0,229,255,0.4)';
+  circle.textContent = '⏳';
+  status.textContent = 'Scanning...';
+
+  setTimeout(() => {
+    circle.style.border = '3px solid var(--accent3)';
+    circle.style.boxShadow = '0 0 20px rgba(16,185,129,0.4)';
+    circle.textContent = '✅';
+    status.textContent = 'Biometric verified!';
+    state.authenticated = true;
+    showAlert('auth-alert3', 'success', '🎉 Authentication complete! You can now cast your vote.');
+    updateVoterStatus();
+    setTimeout(() => showSection('vote'), 1500);
+  }, 2000);
+}
+
+// ══════════════════════════════════════
+// VOTE
+// ══════════════════════════════════════
+function renderVotePanel() {
+  const grid = document.getElementById('candidates-grid');
+  grid.innerHTML = CANDIDATES.map(c => `
+    <div class="candidate-card" id="cand-${c.id}" onclick="selectCandidate(${c.id})">
+      <div class="candidate-avatar" style="border-color:${c.color}22; background: ${c.color}11;">${c.symbol}</div>
+      <div class="candidate-name">${c.name}</div>
+      <div class="candidate-party"><span class="party-dot" style="background:${c.color};"></span>${c.party}</div>
+    </div>
+  `).join('');
+
+  if (!state.authenticated) {
+    document.getElementById('vote-locked').style.display = 'block';
+    document.getElementById('vote-panel').style.opacity = '0.4';
+    document.getElementById('vote-panel').style.pointerEvents = 'none';
+  }
+  if (state.voted) {
+    document.getElementById('vote-done').style.display = 'block';
+  }
+}
+
+function selectCandidate(id) {
+  if (!state.authenticated || state.voted) return;
+  state.selectedCandidate = id;
+  document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('cand-' + id).classList.add('selected');
+
+  const cand = CANDIDATES.find(c => c.id === id);
+  document.getElementById('selected-display').innerHTML =
+    `${cand.symbol} ${cand.name} <span style="color:var(--muted); font-size:0.8rem; font-weight:400;">(${cand.party})</span>`;
+  document.getElementById('vote-confirm').style.display = 'block';
+  document.getElementById('vote-receipt').style.display = 'none';
+}
+
+function clearSelection() {
+  state.selectedCandidate = null;
+  document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('vote-confirm').style.display = 'none';
+}
+
+function castVote() {
+  if (!state.selectedCandidate) return;
+  const btn = document.getElementById('cast-btn');
+  btn.innerHTML = '<span class="spinner"></span> Broadcasting to blockchain...';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    const cand = CANDIDATES.find(c => c.id === state.selectedCandidate);
+    cand.votes++;
+
+    const txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+    const blockIndex = state.blocks.length;
+    const prevBlock = state.blocks[state.blocks.length - 1];
+    const newBlock = {
+      index: blockIndex,
+      hash: '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join(''),
+      prevHash: prevBlock.hash,
+      data: `Vote: ${cand.name} (${cand.party})`,
+      voter: state.wallet?.address || '0xAnon',
+      txHash,
+      timestamp: new Date().toISOString(),
+      nonce: Math.floor(Math.random() * 99999),
+    };
+    state.blocks.push(newBlock);
+    state.transactions.push({ txHash, candidate: cand.name, party: cand.party, time: new Date().toLocaleTimeString(), block: blockIndex });
+
+    state.voted = true;
+    document.getElementById('tx-hash').textContent = txHash;
+    document.getElementById('block-num').textContent = `#${blockIndex}`;
+    document.getElementById('vote-timestamp').textContent = newBlock.timestamp;
+    document.getElementById('vote-confirm').style.display = 'none';
+    document.getElementById('vote-receipt').style.display = 'block';
+    updateStats();
+  }, 2200);
+}
+
+// ══════════════════════════════════════
+// BLOCKCHAIN
+// ══════════════════════════════════════
+function renderBlockchain() {
+  const chain = document.getElementById('chain-vis');
+  chain.innerHTML = state.blocks.map((b, i) => `
+    ${i > 0 ? '<div class="chain-arrow">→</div>' : ''}
+    <div class="block ${i === 0 ? 'genesis' : 'new-block'}">
+      <div class="block-label">${i === 0 ? 'Genesis' : `Block #${b.index}`}</div>
+      <div class="block-hash">${b.hash.slice(0,18)}...</div>
+      <div class="block-data">${b.data.slice(0, 22)}${b.data.length > 22 ? '…' : ''}</div>
+      <div class="block-num">Nonce: ${b.nonce}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('bc-blocks').textContent = state.blocks.length;
+  document.getElementById('bc-txs').textContent = state.transactions.length;
+
+  const log = document.getElementById('tx-log');
+  if (state.transactions.length === 0) {
+    log.innerHTML = '<div style="text-align:center; padding:30px; color:var(--muted); font-size:0.88rem;">No transactions yet.</div>';
+  } else {
+    log.innerHTML = state.transactions.map(tx => `
+      <div class="tx-row">
+        <div class="tx-icon">🗳️</div>
+        <div>
+          <div class="tx-hash">${tx.txHash}</div>
+          <div style="font-size:0.78rem; color:var(--muted); margin-top:3px;">
+            Vote for <strong style="color:var(--text);">${tx.candidate}</strong> · Block #${tx.block} · ${tx.time}
+          </div>
+        </div>
+        <span class="tag tag-green">Confirmed</span>
+      </div>
+    `).join('');
+  }
+}
+
+// ══════════════════════════════════════
+// RESULTS
+// ══════════════════════════════════════
+function renderResults() {
+  const total = CANDIDATES.reduce((s, c) => s + c.votes, 0);
+  const bars = document.getElementById('results-bars');
+
+  bars.innerHTML = CANDIDATES.map(c => {
+    const pct = total > 0 ? ((c.votes / total) * 100).toFixed(1) : 0;
+    return `
+    <div class="result-row">
+      <div class="result-name">${c.symbol} ${c.name}</div>
+      <div class="result-bar-wrap">
+        <div class="result-bar" style="width:${pct}%; background:${c.color};"></div>
+      </div>
+      <div class="result-count">${c.votes} votes</div>
+      <div class="result-pct">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  // Winner
+  const maxVotes = Math.max(...CANDIDATES.map(c => c.votes));
+  if (maxVotes > 0) {
+    const winner = CANDIDATES.find(c => c.votes === maxVotes);
+    document.getElementById('winner-box').style.display = 'flex';
+    document.getElementById('winner-name').textContent = `${winner.symbol} ${winner.name} (${winner.party})`;
+    document.getElementById('winner-count').textContent = winner.votes;
+  }
+}
+
+// ══════════════════════════════════════
+// VERIFY
+// ══════════════════════════════════════
+function verifyVote() {
+  const hash = document.getElementById('verify-hash').value.trim();
+  const tx = state.transactions.find(t => t.txHash === hash);
+  const res = document.getElementById('verify-result');
+  if (!hash) {
+    res.className = 'alert error'; res.style.display = 'block';
+    res.textContent = '❌ Enter a transaction hash.';
+  } else if (tx) {
+    res.className = 'alert success'; res.style.display = 'block';
+    res.innerHTML = `✅ Vote verified on blockchain.<br>Candidate: <strong>${tx.candidate}</strong> · Block #${tx.block} · ${tx.time}`;
+  } else {
+    res.className = 'alert error'; res.style.display = 'block';
+    res.textContent = '❌ Transaction not found on blockchain.';
+  }
+}
+
+// ══════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════
+function showAlert(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = 'alert ' + type;
+  el.textContent = msg;
+}
+
+function updateStats() {
+  const total = CANDIDATES.reduce((s, c) => s + c.votes, 0);
+  document.getElementById('stat-votes').textContent = total;
+  document.getElementById('stat-blocks').textContent = state.blocks.length;
+}
+
+function updateVoterStatus() {
+  const el = document.getElementById('voter-status');
+  if (state.authenticated && state.voter) {
+    el.textContent = `✅ ${state.voter.name.split(' ')[0]}`;
+    el.style.color = 'var(--accent3)';
+  } else if (state.registered && state.voter) {
+    el.textContent = `📋 ${state.voter.name.split(' ')[0]}`;
+    el.style.color = 'var(--muted)';
+  }
+}
+
+// Init
+renderVotePanel();
+renderResults();
+</script>
+
+</body>
+</html>
